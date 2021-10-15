@@ -3,6 +3,7 @@ import sys
 from torch.utils.data import Dataset
 import cv2
 import numpy as np
+from matplotlib import pyplot as plt
 from FaceMaskData import FaceMaskData
 
 class FaceMaskDataset(Dataset):
@@ -19,7 +20,7 @@ class FaceMaskDataset(Dataset):
         img_name = self.x[idx]
         y_dict = self.y[idx]
         rectangles = []
-        clases_id = []
+        classes_id = []
         classes_name = []
 
         print(img_name,y_dict)
@@ -36,7 +37,8 @@ class FaceMaskDataset(Dataset):
             x = self.transforms(image = img)
             x = x['image']
         else:
-            x = np.transpose(img, (2, 0, 1))
+            # x = np.transpose(img, (2, 0, 1))
+            x = img
 
         for anot in y_dict['annotations']:
             xmin, ymin, xmax, ymax = anot['xmin'], anot['ymin'], anot['xmax'], anot['ymax']
@@ -49,10 +51,10 @@ class FaceMaskDataset(Dataset):
                 values = [xmin, ymin, xmax, ymax]
 
             rectangles.append(values)
-            clases_id = [class_id]
-            classes_name = [class_name]
+            classes_id.append(class_id)
+            classes_name.append(class_name)
 
-        return x, rectangles, clases_id, classes_name
+        return x, rectangles, classes_id, classes_name
 
     def __len__(self):
         return len(self.x)
@@ -73,7 +75,35 @@ def test_dataset():
     print('Training contains {} samples which is {:g}% of the data'.format(len(trainset), len(trainset) * 100 / (len(trainset) + len(validset))))
     print('Validation contains {} samples which is {:g}% of the data'.format(len(validset), len(validset) * 100 / (len(trainset) + len(validset))))
     
-    print(next(iter(validset)))
+    data_iter = iter(validset)
+    for e in data_iter:
+        if len(e[1]) > 1:
+            example = e
+            break
+
+    print(example)
+
+    img = example[0]
+    rect = example[1]
+    ids = example[2]
+    labels = example[3]
+
+    for rec, id, lbl in zip(rect, ids, labels):
+        start_point = (rec[0], rec[1])
+        end_point = (rec[2], rec[3])
+        color = (0, 255, 0)
+        thickness = 1
+        img = cv2.rectangle(img, start_point, end_point, color, thickness)
+
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        fontScale = 1 / 3
+        color = (0, 0, 0)
+        thickness = 1
+        img = cv2.putText(img, '{} ({})'.format(lbl, id), start_point, font, fontScale, color, thickness, cv2.LINE_AA)
+
+    plt.imshow(img)
+    plt.show()
+
 
 if __name__ == '__main__':
     test_dataset()
