@@ -8,14 +8,17 @@ from matplotlib import pyplot as plt
 from FaceMaskData import FaceMaskData
 
 class FaceMaskDataset(Dataset):
-    def __init__(self, samples_name, annotations, samples_path, transforms=None, is_width_height=False, width=None, height=None):
+    def __init__(self, samples_name, annotations, samples_path, transforms=None):
         self.x = samples_name
         self.y = annotations
         self.path = os.path.join(sys.path[0], samples_path)
         self.transforms = transforms
-        self.is_width_height = is_width_height
-        self.width = width
-        self.height = height
+
+        self.class_names = {
+            0:  'mask',
+            1:  'incorrect mask',
+            2:  'no mask'
+        }
 
     def __getitem__(self, idx, with_labels=False):
         img_name = self.x[idx]
@@ -25,9 +28,6 @@ class FaceMaskDataset(Dataset):
 
         img = cv2.imread(img_path)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-        if self.width and self.height:
-            img = cv2.resize(img, (self.width, self.height), cv2.INTER_AREA)
         
         boxes = []
         labels = []
@@ -66,17 +66,9 @@ class FaceMaskDataset(Dataset):
         return len(self.x)
 
     def decode(self, value):
-        names = {
-            0:  'mask',
-            1:  'incorrect mask',
-            2:  'no mask'
-        }
-
         value = np.array(value, dtype=np.int8).item()
-
-        return names[value] if value < len(names) else 'None'
+        return self.class_names[value] if value < len(self.class_names) else 'None'
         # values = torch.as_tensor(values, dtype=torch.int32)
-
         # return [ names[val] if val < len(names) else 'None' for val in values ]
 
 
