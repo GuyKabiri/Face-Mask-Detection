@@ -120,7 +120,7 @@ class FaceMaskData:
 
         self.records = np.array(self.records, dtype=object)
 
-        return self.split()
+        return self.split(train_size, drop_rate, seed)
 
 
 def test_data():

@@ -15,7 +15,7 @@ faceMasksData = FaceMaskData(imgs_path, msks_path)
 
 from detectron2.data import DatasetCatalog, MetadataCatalog
 
-DatasetCatalog.register('mask_dataset', lambda: faceMasksData.load_data())
+DatasetCatalog.register('mask_dataset', lambda: faceMasksData.load_data(train_size=1))
 MetadataCatalog.get('mask_dataset').set(thing_classes=faceMasksData.classes)
 chess_metadata = MetadataCatalog.get('mask_dataset')
 
