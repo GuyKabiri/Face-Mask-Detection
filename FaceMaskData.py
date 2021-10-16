@@ -1,5 +1,6 @@
 import os
 import sys
+import uuid
 # import torch
 import numpy as np
 import pandas as pd
@@ -74,6 +75,7 @@ class FaceMaskData:
             img_dict = dict()
 
             img_dict['name'] = img
+            img_dict['image_id'] = str(uuid.uuid1())
             img_masks = []
 
             df_img_name = img.split('.')[0]         #   df file name format is: 'img123' while img variable is img123.jpg

@@ -1,5 +1,6 @@
 import os
 import sys
+import torch
 from torch.utils.data import Dataset
 import cv2
 import numpy as np
@@ -16,14 +17,9 @@ class FaceMaskDataset(Dataset):
         self.width = width
         self.height = height
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx, with_labels=False):
         img_name = self.x[idx]
         y_dict = self.y[idx]
-        rectangles = []
-        classes_id = []
-        classes_name = []
-
-        print(img_name,y_dict)
 
         img_path = os.path.join(self.path, img_name)
 
@@ -33,31 +29,56 @@ class FaceMaskDataset(Dataset):
         if self.width and self.height:
             img = cv2.resize(img, (self.width, self.height), cv2.INTER_AREA)
         
-        if self.transforms:
-            x = self.transforms(image = img)
-            x = x['image']
-        else:
-            # x = np.transpose(img, (2, 0, 1))
-            x = img
-
+        boxes = []
+        labels = []
+        names = []
         for anot in y_dict['annotations']:
             xmin, ymin, xmax, ymax = anot['xmin'], anot['ymin'], anot['xmax'], anot['ymax']
-            width, height = anot['width'], anot['height']
-            class_name, class_id = anot['class_name'], anot['class_id']
+            boxes.append([xmin, ymin, xmax, ymax])
+            labels.append(anot['class_id'])
+            names.append(anot['class_name'])
+        boxes = torch.as_tensor(boxes, dtype=torch.float32)
+        labels = torch.as_tensor(labels, dtype=torch.float32)
 
-            if self.is_width_height:
-                values = [xmin, ymin, width, height]
-            else:
-                values = [xmin, ymin, xmax, ymax]
+        target = {
+            'bboxes':    boxes,
+            'labels':   labels,
+            'image_id': y_dict['image_id'],
+            'area':     (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0]),
+            'iscrowd':  int(len(y_dict['annotations']) > 1)
+        }
 
-            rectangles.append(values)
-            classes_id.append(class_id)
-            classes_name.append(class_name)
+        if self.transforms:
+            sample = self.transforms(   image=img,
+                                        bboxes=target['bboxes'],
+                                        labels=target['labels'])
 
-        return x, rectangles, classes_id, classes_name
+            img = sample['image']
+            target['bboxes'] = sample['bboxes']
+            target['labels'] = sample['labels']
+        
+        if with_labels:
+            return img, target, names
+
+        return img, target
 
     def __len__(self):
         return len(self.x)
+
+    def decode(self, value):
+        names = {
+            0:  'mask',
+            1:  'incorrect mask',
+            2:  'no mask'
+        }
+
+        value = np.array(value, dtype=np.int8).item()
+
+        return names[value] if value < len(names) else 'None'
+        # values = torch.as_tensor(values, dtype=torch.int32)
+
+        # return [ names[val] if val < len(names) else 'None' for val in values ]
+
 
 
 
@@ -83,23 +104,27 @@ def test_dataset():
 
     print(example)
 
-    img = example[0]
-    rect = example[1]
-    ids = example[2]
-    labels = example[3]
+    img, target = example
 
-    for rec, id, lbl in zip(rect, ids, labels):
-        start_point = (rec[0], rec[1])
-        end_point = (rec[2], rec[3])
-        color = (0, 255, 0)
+    for box, lbl in zip(target['boxes'], target['labels']):
+        xmin, ymin, xmax, ymax = np.array(box, dtype=np.int32)
+        start_point = (xmin, ymin)
+        end_point = (xmax, ymax)
+
+        color = (0, 0, 0)
+        if lbl == 0:
+            color = (0, 255, 0)
+        elif lbl == 1:
+            color = (0, 0, 255)
+        elif lbl == 2:
+            color = (255, 0, 0)
         thickness = 1
         img = cv2.rectangle(img, start_point, end_point, color, thickness)
 
         font = cv2.FONT_HERSHEY_SIMPLEX
         fontScale = 1 / 3
-        color = (0, 0, 0)
         thickness = 1
-        img = cv2.putText(img, '{} ({})'.format(lbl, id), start_point, font, fontScale, color, thickness, cv2.LINE_AA)
+        img = cv2.putText(img, '{} ({})'.format(validset.decode(lbl), lbl), start_point, font, fontScale, color, thickness, cv2.LINE_AA)
 
     plt.imshow(img)
     plt.show()
