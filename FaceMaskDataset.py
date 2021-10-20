@@ -1,139 +1,120 @@
 import os
-import sys
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
-from FaceMaskData import FaceMaskData
+from xml.etree import ElementTree as et
+
+
 
 class FaceMaskDataset(Dataset):
-    def __init__(self, samples_name, annotations, samples_path, is_xy=True, transforms=None):
-        self.x = samples_name
-        self.y = annotations
-        self.path = os.path.join(sys.path[0], samples_path)
-        self.is_xy = is_xy
+
+    def __init__(self, images, annotations, img_dir, annt_dir, width, height, transforms=None):
         self.transforms = transforms
+        self.imgs = images
+        self.ants = annotations
+        self.images_dir = img_dir
+        self.annotation_dir = annt_dir
+        self.height = height
+        self.width = width
+           
+        # classes: 0 index is reserved for background
+        self.classes = [None, 'without_mask','with_mask','mask_weared_incorrect']
 
-        self.class_names = {
-            0:  'mask',
-            1:  'incorrect mask',
-            2:  'no mask'
-        }
+    def __getitem__(self, idx):
 
-    def __getitem__(self, idx, with_text=False):
-        img_name = self.x[idx]
-        y_dict = self.y[idx]
+        img_name = self.imgs[idx]
+        image_path = os.path.join(self.images_dir, img_name)
 
-        img_path = os.path.join(self.path, img_name)
-
-        img = cv2.imread(img_path)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        # reading the images and converting them to correct size and color    
+        img = cv2.imread(image_path)
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB).astype(np.float32)
+        img_res = cv2.resize(img_rgb, (self.width, self.height), cv2.INTER_AREA)
+        # dividing by 255
+        img_res /= 255.0
+        
+        # annotation file
+        annot_filename = self.ants[idx]
+        annot_file_path = os.path.join(self.annotation_dir, annot_filename)
         
         boxes = []
         labels = []
-        names = []
-        for entity in y_dict['annotations']:
-            if self.is_xy:
-                xmin, ymin, xmax, ymax = entity['xmin'], entity['ymin'], entity['xmax'], entity['ymax']
-                boxes.append([xmin, ymin, xmax, ymax])
-            else:
-                xmin, ymin, width, height = entity['xmin'], entity['ymin'], entity['width'], entity['height']
-                boxes.append([xmin, ymin, width, height])
-            labels.append(entity['class_id'])
-            names.append(entity['class_name'])
+        tree = et.parse(annot_file_path)
+        root = tree.getroot()
+        
+        # cv2 image gives size as height x width
+        wt = img.shape[1]
+        ht = img.shape[0]
+        
+        # box coordinates for xml files are extracted and corrected for image size given
+        for member in root.findall('object'):
+            labels.append(self.classes.index(member.find('name').text))
+            
+            # bounding box
+            xmin = int(member.find('bndbox').find('xmin').text)
+            xmax = int(member.find('bndbox').find('xmax').text)
+            
+            ymin = int(member.find('bndbox').find('ymin').text)
+            ymax = int(member.find('bndbox').find('ymax').text)
+            
+            
+            xmin_corr = (xmin/(wt+1))*(self.width-1)
+            xmax_corr = (xmax/(wt+1))*(self.width-1)
+            ymin_corr = (ymin/(ht+1))*(self.height-1)
+            ymax_corr = (ymax/(ht+1))*(self.height-1)
 
+            # def round_val(val):
+            #     if val > 1:
+            #         return 1.0
+            #     elif val < 0:
+            #         return 0.0
+            #     else:
+            #         return val
        
+            # xmin_corr = round_val(xmin_corr)
+            # xmax_corr = round_val(xmax_corr)
+            # ymin_corr = round_val(ymin_corr)
+            # ymax_corr = round_val(ymax_corr)
+
+
+            
+            boxes.append([xmin_corr, ymin_corr, xmax_corr, ymax_corr])
+        
+        # convert boxes into a torch.Tensor
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
-        labels = torch.as_tensor(labels, dtype=torch.float32)
+        
+        # getting the areas of the boxes
+        area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
 
-        target = {
-            'bboxes':   boxes,
-            'labels':   labels,
-            'image_id': y_dict['image_id'],
-        }
+        # suppose all instances are not crowd
+        iscrowd = torch.zeros((boxes.shape[0],), dtype=torch.int64)
+        
+        labels = torch.as_tensor(labels, dtype=torch.int64)
 
-        # target = {
-        #     'bboxes':    boxes,
-        #     'labels':   labels,
-        #     'image_id': y_dict['image_id'],
-        #     'area':     (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0]),
-        #     'iscrowd':  int(len(y_dict['annotations']) > 1)
-        # }
+
+        target = {}
+        target["boxes"] = boxes
+        target["labels"] = labels
+        target["area"] = area
+        target["iscrowd"] = iscrowd
+        # image_id
+        image_id = torch.tensor([idx])
+        target["image_id"] = image_id
+
 
         if self.transforms:
-            sample = self.transforms(   image=img,
-                                        bboxes=target['bboxes'],
-                                        labels=target['labels'])
-
-            img = sample['image']
-            target['bboxes'] = sample['bboxes']
-            target['labels'] = sample['labels']
-        
-        if with_text:
-            return img, target, names
-
-        return img, target
+            
+            sample = self.transforms(image = img_res,
+                                     bboxes = target['boxes'],
+                                     labels = labels)
+            
+            img_res = sample['image']
+            target['boxes'] = torch.Tensor(sample['bboxes'])
+            
+            
+            
+        return img_res, target
 
     def __len__(self):
-        return len(self.x)
-
-    def decode(self, value):
-        value = np.array(value, dtype=np.int8).item()
-        return self.class_names[value] if value < len(self.class_names) else 'None'
-        # values = torch.as_tensor(values, dtype=torch.int32)
-        # return [ names[val] if val < len(names) else 'None' for val in values ]
-
-
-
-
-
-def test_dataset():
-    imgs_path = './images'
-    msks_path = './annotation.csv'
-
-    faceMasksData = FaceMaskData(imgs_path, msks_path)
-    (x_train, y_train), (x_test, y_test) = faceMasksData.load_data()
-
-    trainset = FaceMaskDataset(x_train, y_train, imgs_path, transforms=None)
-    validset = FaceMaskDataset(x_test, y_test, imgs_path, transforms=None)
-
-    print('Training contains {} samples which is {:g}% of the data'.format(len(trainset), len(trainset) * 100 / (len(trainset) + len(validset))))
-    print('Validation contains {} samples which is {:g}% of the data'.format(len(validset), len(validset) * 100 / (len(trainset) + len(validset))))
-    
-    data_iter = iter(validset)
-    for img, target in data_iter:
-        if len(target['bboxes']) > 1:
-            example = (img, target)
-            break
-
-    print(example)
-
-    img, target = example
-
-    for box, lbl in zip(target['bboxes'], target['labels']):
-        xmin, ymin, xmax, ymax = np.array(box, dtype=np.int32)
-        start_point = (xmin, ymin)
-        end_point = (xmax, ymax)
-
-        color = (0, 0, 0)
-        if lbl == 0:
-            color = (0, 255, 0)
-        elif lbl == 1:
-            color = (0, 0, 255)
-        elif lbl == 2:
-            color = (255, 0, 0)
-        thickness = 1
-        img = cv2.rectangle(img, start_point, end_point, color, thickness)
-
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        fontScale = 1 / 3
-        thickness = 1
-        img = cv2.putText(img, '{} ({})'.format(validset.decode(lbl), lbl), start_point, font, fontScale, color, thickness, cv2.LINE_AA)
-
-    plt.imshow(img)
-    plt.show()
-
-
-if __name__ == '__main__':
-    test_dataset()
+        return len(self.imgs)
