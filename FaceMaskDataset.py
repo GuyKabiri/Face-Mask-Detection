@@ -1,17 +1,18 @@
 import os
 import sys
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 from FaceMaskData import FaceMaskData
 
 class FaceMaskDataset(Dataset):
-    def __init__(self, samples_name, annotations, samples_path, transforms=None):
+    def __init__(self, samples_name, annotations, samples_path, is_xy=True, transforms=None):
         self.x = samples_name
         self.y = annotations
         self.path = os.path.join(sys.path[0], samples_path)
+        self.is_xy = is_xy
         self.transforms = transforms
 
         self.class_names = {
@@ -20,7 +21,7 @@ class FaceMaskDataset(Dataset):
             2:  'no mask'
         }
 
-    def __getitem__(self, idx, with_labels=False):
+    def __getitem__(self, idx, with_text=False):
         img_name = self.x[idx]
         y_dict = self.y[idx]
 
@@ -32,21 +33,33 @@ class FaceMaskDataset(Dataset):
         boxes = []
         labels = []
         names = []
-        for anot in y_dict['annotations']:
-            xmin, ymin, xmax, ymax = anot['xmin'], anot['ymin'], anot['xmax'], anot['ymax']
-            boxes.append([xmin, ymin, xmax, ymax])
-            labels.append(anot['class_id'])
-            names.append(anot['class_name'])
+        for entity in y_dict['annotations']:
+            if self.is_xy:
+                xmin, ymin, xmax, ymax = entity['xmin'], entity['ymin'], entity['xmax'], entity['ymax']
+                boxes.append([xmin, ymin, xmax, ymax])
+            else:
+                xmin, ymin, width, height = entity['xmin'], entity['ymin'], entity['width'], entity['height']
+                boxes.append([xmin, ymin, width, height])
+            labels.append(entity['class_id'])
+            names.append(entity['class_name'])
+
+       
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
         labels = torch.as_tensor(labels, dtype=torch.float32)
 
         target = {
-            'bboxes':    boxes,
+            'bboxes':   boxes,
             'labels':   labels,
             'image_id': y_dict['image_id'],
-            'area':     (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0]),
-            'iscrowd':  int(len(y_dict['annotations']) > 1)
         }
+
+        # target = {
+        #     'bboxes':    boxes,
+        #     'labels':   labels,
+        #     'image_id': y_dict['image_id'],
+        #     'area':     (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0]),
+        #     'iscrowd':  int(len(y_dict['annotations']) > 1)
+        # }
 
         if self.transforms:
             sample = self.transforms(   image=img,
@@ -57,7 +70,7 @@ class FaceMaskDataset(Dataset):
             target['bboxes'] = sample['bboxes']
             target['labels'] = sample['labels']
         
-        if with_labels:
+        if with_text:
             return img, target, names
 
         return img, target
@@ -89,16 +102,16 @@ def test_dataset():
     print('Validation contains {} samples which is {:g}% of the data'.format(len(validset), len(validset) * 100 / (len(trainset) + len(validset))))
     
     data_iter = iter(validset)
-    for e in data_iter:
-        if len(e[1]) > 1:
-            example = e
+    for img, target in data_iter:
+        if len(target['bboxes']) > 1:
+            example = (img, target)
             break
 
     print(example)
 
     img, target = example
 
-    for box, lbl in zip(target['boxes'], target['labels']):
+    for box, lbl in zip(target['bboxes'], target['labels']):
         xmin, ymin, xmax, ymax = np.array(box, dtype=np.int32)
         start_point = (xmin, ymin)
         end_point = (xmax, ymax)

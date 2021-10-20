@@ -71,11 +71,11 @@ class FaceMaskData:
 
         masks_df = pd.read_csv(msks_path)
 
-        for img in self.images:
+        for i, img in enumerate(self.images):
             img_dict = dict()
 
             img_dict['name'] = img
-            img_dict['image_id'] = str(uuid.uuid1())
+            img_dict['image_id'] = int(i)
             img_masks = []
 
             df_img_name = img.split('.')[0]         #   df file name format is: 'img123' while img variable is img123.jpg
