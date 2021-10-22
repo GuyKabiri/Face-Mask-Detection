@@ -10,6 +10,16 @@ from xml.etree import ElementTree as et
 
 class FaceMaskDataset(Dataset):
 
+    '''
+        Params:
+            -   images      -   list of images' file names
+            -   annotations -   list of annotations' file names
+            -   img_dit     -   directory of images.
+            -   annt_dit    -   directory of annotations.
+            -   width       -   the desired width of the images as an input to the model
+            -   height      -   the desired height of the images as an input to the model
+            -   transforms  -   transformations to perform on both the images and the annotations
+    '''
     def __init__(self, images, annotations, img_dir, annt_dir, width, height, transforms=None):
         self.transforms = transforms
         self.imgs = images
@@ -19,92 +29,61 @@ class FaceMaskDataset(Dataset):
         self.height = height
         self.width = width
            
-        # classes: 0 index is reserved for background
+        #   class 0 for background
         self.classes = [None, 'without_mask','with_mask','mask_weared_incorrect']
 
     def __getitem__(self, idx):
 
         img_name = self.imgs[idx]
-        image_path = os.path.join(self.images_dir, img_name)
+        image_path = os.path.join(self.images_dir, img_name)                        #   get the exact image path
 
-        # reading the images and converting them to correct size and color    
         img = cv2.imread(image_path)
-        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB).astype(np.float32)
-        img_res = cv2.resize(img_rgb, (self.width, self.height), cv2.INTER_AREA)
-        # dividing by 255
-        img_res /= 255.0
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB).astype(np.float32)               #   convert to RGB
+        img_res = cv2.resize(img, (self.width, self.height), cv2.INTER_AREA)        #   resize to desired size (should modify boundry boxes as well)
+        img_res /= 255.0    #   devide so image values will be between [0, 1]
         
-        # annotation file
-        annot_filename = self.ants[idx]
-        annot_file_path = os.path.join(self.annotation_dir, annot_filename)
+        annt_filename = self.ants[idx]
+        annt_file_path = os.path.join(self.annotation_dir, annt_filename)         #   get the exact annotation path
         
         boxes = []
         labels = []
-        tree = et.parse(annot_file_path)
+        tree = et.parse(annt_file_path)     #   open as dictionary
         root = tree.getroot()
         
-        # cv2 image gives size as height x width
-        wt = img.shape[1]
-        ht = img.shape[0]
+        org_h, org_w = img.shape[0], img.shape[1]   #   original width and height of the image
         
-        # box coordinates for xml files are extracted and corrected for image size given
         for member in root.findall('object'):
-            labels.append(self.classes.index(member.find('name').text))
+            labels.append(self.classes.index(member.find('name').text))     #   append the box text label to the array
             
-            # bounding box
             xmin = int(member.find('bndbox').find('xmin').text)
-            xmax = int(member.find('bndbox').find('xmax').text)
-            
             ymin = int(member.find('bndbox').find('ymin').text)
+            xmax = int(member.find('bndbox').find('xmax').text)
             ymax = int(member.find('bndbox').find('ymax').text)
             
+            #   convert corrdinations to image's new size
+            xmin_corr = (xmin/(org_w+1))*(self.width-1)
+            ymin_corr = (ymin/(org_h+1))*(self.height-1)
+            xmax_corr = (xmax/(org_w+1))*(self.width-1)
+            ymax_corr = (ymax/(org_h+1))*(self.height-1)
             
-            xmin_corr = (xmin/(wt+1))*(self.width-1)
-            xmax_corr = (xmax/(wt+1))*(self.width-1)
-            ymin_corr = (ymin/(ht+1))*(self.height-1)
-            ymax_corr = (ymax/(ht+1))*(self.height-1)
-
-            # def round_val(val):
-            #     if val > 1:
-            #         return 1.0
-            #     elif val < 0:
-            #         return 0.0
-            #     else:
-            #         return val
-       
-            # xmin_corr = round_val(xmin_corr)
-            # xmax_corr = round_val(xmax_corr)
-            # ymin_corr = round_val(ymin_corr)
-            # ymax_corr = round_val(ymax_corr)
-
-
-            
-            boxes.append([xmin_corr, ymin_corr, xmax_corr, ymax_corr])
+            boxes.append([xmin_corr, ymin_corr, xmax_corr, ymax_corr])      #   append the box to the array
         
-        # convert boxes into a torch.Tensor
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
-        
-        # getting the areas of the boxes
-        area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
-
-        # suppose all instances are not crowd
+        area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])    #   calculate area of the boxes
         iscrowd = torch.zeros((boxes.shape[0],), dtype=torch.int64)
-        
         labels = torch.as_tensor(labels, dtype=torch.int64)
-
-
-        target = {}
-        target["boxes"] = boxes
-        target["labels"] = labels
-        target["area"] = area
-        target["iscrowd"] = iscrowd
-        # image_id
         image_id = torch.tensor([idx])
-        target["image_id"] = image_id
 
+        #   place all data in a dictionary
+        target = {
+            'boxes':    boxes,
+            'labels':   labels,
+            'area':     area,
+            'iscrowd':  iscrowd,
+            'image_id': image_id
+        }
 
-        if self.transforms:
-            
+        if self.transforms:   
             sample = self.transforms(image = img_res,
                                      bboxes = target['boxes'],
                                      labels = labels)
