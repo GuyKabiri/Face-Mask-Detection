@@ -41,6 +41,9 @@ class FaceMaskData:
     '''
     def load_data(self, train_size=.8, drop_rate=0, seed=42):
 
+        if drop_rate > 0:
+            print('\033[93m-- The data loaded using drop_rate={}, therefore not all of the data will be loaded! --\033[0m'.format(drop_rate))
+
         self.images = np.array( [img for img in sorted(os.listdir(self.images_path))] )
         self.annotates = np.array( [ant for ant in sorted(os.listdir(self.annotations_path))] )
 
