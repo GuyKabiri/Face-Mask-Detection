@@ -44,6 +44,7 @@ class FaceMaskData:
         self.images = np.array( [img for img in sorted(os.listdir(self.images_path))] )
         self.annotates = np.array( [ant for ant in sorted(os.listdir(self.annotations_path))] )
 
+        self.is_loaded = True
         return self._split(train_size, drop_rate, seed)
 
 
