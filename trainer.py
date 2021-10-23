@@ -1,5 +1,6 @@
 import os
 import time
+import gc
 from tqdm import tqdm
 import torch
 from torch.utils.tensorboard import SummaryWriter
@@ -20,7 +21,7 @@ def create_env(path):
         if not os.path.exists(sub_path):
             os.mkdir(sub_path)
 
-def train(model, loaders, optimizer, path, configurations, scheduler=None):
+def wrapped_train(model, loaders, optimizer, path, configurations, scheduler):
     print('This running path is: `{}`\n'.format(path))
     time.sleep(1)
     create_env(path)
@@ -91,7 +92,7 @@ def train(model, loaders, optimizer, path, configurations, scheduler=None):
             writers['train'].add_scalar('lr_epoch', scheduler.get_last_lr()[0], epch)
             scheduler.step()
 
-        saveing_path = '{}/models/{}_epoch_{}.pth'.format(path, CFG.model_name, epch)
+        saveing_path = '{}/models/{}_epoch_{}.pth'.format(path, configurations.model_name, epch)
         torch.save(model.state_dict(), saveing_path)     
         
         # if the model perform better in this epoch, save it's parameters
@@ -99,3 +100,11 @@ def train(model, loaders, optimizer, path, configurations, scheduler=None):
             best_loss = accum_loss
             saveing_path = '{}/models/{}_best.pth'.format(path, configurations.model_name)
             torch.save(model.state_dict(), saveing_path)
+
+
+def train(model, loaders, optimizer, path, configurations, scheduler=None):
+    try:
+        wrapped_train(model, loaders, optimizer, path, configurations, scheduler)
+    except Exception:
+        torch.cuda.empty_cache()
+    gc.collect()
