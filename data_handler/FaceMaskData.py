@@ -32,7 +32,6 @@ class FaceMaskData:
 
         return (x_train, y_train), (x_test, y_test)
 
-
     '''
         Params:
             -   train_size  -   percentage of the train data, the test size therfore will be 1-train_size.

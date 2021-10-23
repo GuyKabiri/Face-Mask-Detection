@@ -21,6 +21,33 @@ def create_env(path):
         if not os.path.exists(sub_path):
             os.mkdir(sub_path)
 
+def train2(model, loader, optimizer, path, configurations, scheduler=None):
+    device = configurations.device
+    model = model.to(device).train()
+
+
+    for epoch in range(configurations.n_epochs) :
+        epoch_loss = 0
+        
+        for imgs, annotations in tqdm(loader):
+            imgs = list(img.to(device) for img in imgs)
+            annotations = [{k: v.to(device) for k, v in t.items()} for t in annotations]
+            
+            predict = model(imgs, annotations)
+            losses = sum(loss for loss in predict.values())        
+
+            optimizer.zero_grad()
+            losses.backward()
+            optimizer.step() 
+            epoch_loss += losses
+            
+        print(epoch+1, '/', configurations.n_epochs, ' : {:.5f}'.format(epoch_loss))
+        if epoch_loss < 0.1 :
+            print('early stop')
+            break
+
+
+
 def wrapped_train(model, loaders, optimizer, path, configurations, scheduler):
     print('This running path is: `{}`\n'.format(path))
     time.sleep(1)
@@ -67,9 +94,9 @@ def wrapped_train(model, loaders, optimizer, path, configurations, scheduler):
                     #   accumulate losses to get final loss of epoch
                     for name, val in loss_dict.items():
                         if name in epoch_losses:
-                            epoch_losses[name] += val / batch_size
+                            epoch_losses[name] += val #/ batch_size
                         else:
-                            epoch_losses[name] = val / batch_size
+                            epoch_losses[name] = val #/ batch_size
 
                     del imgs, annts, loss_dict, losses
                     torch.cuda.empty_cache()
@@ -98,7 +125,7 @@ def wrapped_train(model, loaders, optimizer, path, configurations, scheduler):
         # if the model perform better in this epoch, save it's parameters
         if accum_loss < best_loss:
             best_loss = accum_loss
-            saveing_path = '{}/models/{}_loss_{}.pth'.format(path, configurations.model_name, best_loss)
+            saveing_path = '{}/models/{}_loss_{:.5f}.pth'.format(path, configurations.model_name, best_loss)
             torch.save(model.state_dict(), saveing_path)
 
 
