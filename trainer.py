@@ -75,7 +75,7 @@ def wrapped_train(model, loaders, optimizer, path, configurations, scheduler):
                     torch.cuda.empty_cache()
                     progress_bar.update(1)
 
-            accum_loss /= samples
+            # accum_loss /= samples
 
             epoch_print += phase + ':\t'
             for key, val in epoch_losses.items():
@@ -92,13 +92,13 @@ def wrapped_train(model, loaders, optimizer, path, configurations, scheduler):
             writers['train'].add_scalar('lr_epoch', scheduler.get_last_lr()[0], epch)
             scheduler.step()
 
-        saveing_path = '{}/models/{}_epoch_{}.pth'.format(path, configurations.model_name, epch)
-        torch.save(model.state_dict(), saveing_path)     
+        # saveing_path = '{}/models/{}_epoch_{}.pth'.format(path, configurations.model_name, epch)
+        # torch.save(model.state_dict(), saveing_path)     
         
         # if the model perform better in this epoch, save it's parameters
         if accum_loss < best_loss:
             best_loss = accum_loss
-            saveing_path = '{}/models/{}_best.pth'.format(path, configurations.model_name)
+            saveing_path = '{}/models/{}_loss_{}.pth'.format(path, configurations.model_name, best_loss)
             torch.save(model.state_dict(), saveing_path)
 
 
