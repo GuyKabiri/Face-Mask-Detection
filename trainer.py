@@ -124,8 +124,9 @@ def wrapped_train(model, loaders, optimizer, path, configurations, scheduler):
         
         # if the model perform better in this epoch, save it's parameters
         if accum_loss < best_loss:
+            saveing_path = '{}/models/{}_model.pth'.format(path, configurations.model_name)
+            print('Model saved. Loss < PrevLoss ({:.5f} < {:.5f})'.format(accum_loss, best_loss))
             best_loss = accum_loss
-            saveing_path = '{}/models/{}_loss_{:.5f}.pth'.format(path, configurations.model_name, best_loss)
             torch.save(model.state_dict(), saveing_path)
 
 
