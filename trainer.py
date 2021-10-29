@@ -21,32 +21,6 @@ def create_env(path):
         if not os.path.exists(sub_path):
             os.mkdir(sub_path)
 
-def train2(model, loader, optimizer, path, configurations, scheduler=None):
-    device = configurations.device
-    model = model.to(device).train()
-
-
-    for epoch in range(configurations.n_epochs) :
-        epoch_loss = 0
-        
-        for imgs, annotations in tqdm(loader):
-            imgs = list(img.to(device) for img in imgs)
-            annotations = [{k: v.to(device) for k, v in t.items()} for t in annotations]
-            
-            predict = model(imgs, annotations)
-            losses = sum(loss for loss in predict.values())        
-
-            optimizer.zero_grad()
-            losses.backward()
-            optimizer.step() 
-            epoch_loss += losses
-            
-        print(epoch+1, '/', configurations.n_epochs, ' : {:.5f}'.format(epoch_loss))
-        if epoch_loss < 0.1 :
-            print('early stop')
-            break
-
-
 
 def wrapped_train(model, loaders, optimizer, path, configurations, scheduler):
     print('This running path is: `{}`\n'.format(path))
@@ -117,10 +91,7 @@ def wrapped_train(model, loaders, optimizer, path, configurations, scheduler):
         
         if scheduler is not None:
             writers['train'].add_scalar('lr_epoch', scheduler.get_last_lr()[0], epch)
-            scheduler.step()
-
-        # saveing_path = '{}/models/{}_epoch_{}.pth'.format(path, configurations.model_name, epch)
-        # torch.save(model.state_dict(), saveing_path)     
+            scheduler.step()   
         
         # if the model perform better in this epoch, save it's parameters
         if accum_loss < best_loss:
