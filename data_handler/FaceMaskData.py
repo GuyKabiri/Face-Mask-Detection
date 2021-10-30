@@ -8,6 +8,8 @@ class FaceMaskData:
         self.annotations_path = annotations_path
         self.is_loaded = False
 
+        self.classes = [None, 'without_mask','with_mask','mask_weared_incorrect']
+
 
     '''
         Should not be used by the user. Call to `load_data` instead.

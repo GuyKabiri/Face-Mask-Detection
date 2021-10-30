@@ -40,7 +40,7 @@ class FaceMaskDataset(Dataset):
         img = cv2.imread(image_path)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB).astype(np.float32)               #   convert to RGB
         img_res = cv2.resize(img, (self.width, self.height), cv2.INTER_AREA)        #   resize to desired size (should modify boundry boxes as well)
-        img_res /= 255.0    #   devide so image values will be between [0, 1]
+        # img_res /= 255.0    #   devide so image values will be between [0, 1]
         
         annt_filename = self.ants[idx]
         annt_file_path = os.path.join(self.annotation_dir, annt_filename)         #   get the exact annotation path
