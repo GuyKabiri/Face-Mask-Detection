@@ -41,7 +41,7 @@ def get_iou_as_df(model, loader, nms_thresh):
     
     df = pd.DataFrame(columns=['image_id', 'real_class', 'pred_class', 'iou', 'score'])
     
-    with tqdm(total=len(loader), desc='evaluating IOU') as progress_bar:               #   define progress bas
+    with tqdm(total=len(loader), desc='evaluating IoU') as progress_bar:               #   define progress bas
         for img_batch, target_batch in loader:
             img_batch  = list(img.to(device) for img in img_batch)
 
@@ -109,3 +109,28 @@ def calc_precision_recall(df, iou_thresh, path, eps=1e-6):
 
     df.to_csv('{}/AP@{:.3}.csv'.format(path, iou_thresh), index=False)
     return df
+
+
+def calc_mAP_from_auc_dict(auc_dict):
+    iou_total = dict()
+
+    for iou in auc_dict:
+        iou_sum = sum(auc_dict[iou].values())
+        mAP = iou_sum / len(auc_dict[iou])
+        iou_total[iou] = mAP
+    
+    return iou_total
+
+
+def calc_mAP_per_class(auc_dict, iou_dict):
+    mAP_classes = { c: .0 for c in auc_dict[0.5] }
+    # total_mAP = .0
+
+    for iou, iou_dict in auc_dict.items():
+        for c, val in iou_dict.items():
+            mAP_classes[c] += val
+            
+    for c in mAP_classes:
+        mAP_classes[c] /= len(auc_dict)
+
+    return mAP_classes
