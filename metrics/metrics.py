@@ -107,5 +107,5 @@ def calc_precision_recall(df, iou_thresh, path, eps=1e-6):
         df.at[index, 'precision'] =  count_cls_tp[row_class] / count_cls_instance[row_class]
         df.at[index, 'recall'] = count_cls_tp[row_class] / (total_tp_cls[row_class] + eps)
 
-    df.to_csv('{}/mAP@{:.3}.csv'.format(path, iou_thresh), index=False)
+    df.to_csv('{}/AP@{:.3}.csv'.format(path, iou_thresh), index=False)
     return df
