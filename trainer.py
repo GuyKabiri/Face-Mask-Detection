@@ -120,7 +120,7 @@ def train_epochs(model, loaders, writers, optimizer, path, config, scheduler=Non
             for key, val in epoch_losses.items():
                 writers[phase].add_scalar(key, val, epch)
                 epoch_print += '{}={:.5f}\t'.format(key, val)
-            epoch_print += 'total loss={:.5f}\n'.format(accum_loss)
+            epoch_print += 'total loss={:.5f}{}'.format(accum_loss, '\n' if phase == 'train' else '')
             writers[phase].add_scalar('average_loss', accum_loss, epch)
 
             del epoch_losses
@@ -136,7 +136,7 @@ def train_epochs(model, loaders, writers, optimizer, path, config, scheduler=Non
         # if the model perform better in this epoch, save it's parameters
         if accum_loss < best_loss:
             saveing_path = '{}/models/{}_model.pth'.format(path, config.model_name)
-            print('Model saved. Loss < PrevLoss ({:.5f} < {:.5f})'.format(accum_loss, best_loss))
+            print('Model saved. Loss < PrevLoss ({:.5f} < {:.5f})\n'.format(accum_loss, best_loss))
             best_loss = accum_loss
             torch.save(model.state_dict(), saveing_path)
         time.sleep(1)
