@@ -3,6 +3,7 @@ import time
 import gc
 from tqdm import tqdm
 import torch
+import torch.optim as optim
 from torch.utils.data import DataLoader
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
@@ -12,6 +13,7 @@ from torch.utils.tensorboard import SummaryWriter
 from data_handler.FaceMaskDataset import FaceMaskDataset
 
 import torchvision
+from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 
 
 def collate_fn(batch):
@@ -59,12 +61,12 @@ def create_env(path):
             os.mkdir(sub_path)
 
 
-def train_epochs(model, loaders, writers, optimizer, path, config, scheduler=None):
+def train_epochs(model, loaders, writers, optimizer, path, config, scheduler=None, prev_loss=float('inf')):
     
     device = config.device
     model = model.to(device).train()
 
-    best_loss = 10000
+    best_loss = prev_loss
 
     #   iterate epochs
     for epch in range(1, config.n_epochs + 1):
@@ -140,6 +142,8 @@ def train_epochs(model, loaders, writers, optimizer, path, config, scheduler=Non
             best_loss = accum_loss
             torch.save(model.state_dict(), saveing_path)
         time.sleep(1)
+    
+    return best_loss
 
     
 def get_dataloaders(x_train, x_valid, y_train, y_valid, config):
@@ -156,7 +160,7 @@ def get_dataloaders(x_train, x_valid, y_train, y_valid, config):
                 'valid':    valid_loader }
 
 
-def train_folds(model, x, y, optimizer, path, config, scheduler=None):
+def train_folds(model, x, y, path, config, scheduler=None):
     print('This running path is: `{}`\n'.format(path))
     
     if config.n_folds == 1:
@@ -164,10 +168,15 @@ def train_folds(model, x, y, optimizer, path, config, scheduler=None):
         dataloaders = get_dataloaders(x_train, x_valid, y_train, y_valid, config)
         writers = get_writers(path, config.model_name)
 
+        optimizer = get_optimizer(model, config)
+        scheduler = get_scheduler(optimizer, config)
+
         train_epochs(model, dataloaders, writers, optimizer, path, config, scheduler)
 
     else:
         kfold = KFold(n_splits=config.n_folds, shuffle=True, random_state=config.seed)
+
+        prev_loss = float('inf')
 
         #   iterate folds
         for fold, (train_index, valid_index) in enumerate(kfold.split(x, y), start=1): 
@@ -181,7 +190,10 @@ def train_folds(model, x, y, optimizer, path, config, scheduler=None):
             y_train, y_valid = y[train_index], y[valid_index]
             dataloaders = get_dataloaders(x_train, x_valid, y_train, y_valid, config)
 
-            train_epochs(model, dataloaders, writers, optimizer, path, config, scheduler)
+            optimizer = get_optimizer(model, config)
+            scheduler = get_scheduler(optimizer, config)
+
+            prev_loss = train_epochs(model, dataloaders, writers, optimizer, path, config, scheduler, prev_loss)
 
             del x_train, x_valid, y_train, y_valid
 
@@ -193,11 +205,30 @@ def train_folds(model, x, y, optimizer, path, config, scheduler=None):
         w.close()
 
 
-def train(model, x, y, optimizer, path, config, scheduler=None):
+def train(model, x, y, path, config):
     create_env(path)
+    config.save(path)
     try:
-        train_folds(model, x, y, optimizer, path, config, scheduler)
+        train_folds(model, x, y, path, config)
     except Exception as ex:
         torch.cuda.empty_cache()
         print(ex)
     gc.collect()
+
+
+def get_model(num_classes, pretrained=True):
+    model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=pretrained) #   get model
+    in_features = model.roi_heads.box_predictor.cls_score.in_features                   #   get input size of last layer
+    model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)         #   regenerate the last layer
+    return model
+
+
+def get_optimizer(model, config):
+    params = [p for p in model.parameters() if p.requires_grad]         #   get optimizeable paramaters
+    return config.optimizer(params, **config.optimizer_dict)
+
+
+def get_scheduler(optimizer, config):
+    if not config.scheduler:
+        return None
+    return config.scheduler(optimizer, **config.scheduler_dict)
