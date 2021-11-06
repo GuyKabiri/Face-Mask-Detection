@@ -24,12 +24,27 @@ def collate_fn(batch):
 def get_transformer(phase):
     if phase == 'train':
         return A.Compose([
+                        A.OneOf([
+                            A.Flip(p=0.5),
+                            A.Rotate(p=0.5),
+                            A.RandomScale(p=0.5),
+                        ], p=0.5),
+                            A.OneOf([
+                            A.Affine(p=0.5),
+                            A.Perspective(p=0.5),
+                        ], p=0.5),
+                            A.OneOf([
+                            A.ChannelDropout(p=0.5),
+                            A.Emboss(p=0.5),
+                            A.Sharpen(p=0.5),
+                        ], p=0.5),
+                        A.MotionBlur(p=0.3),
                         A.Normalize(
                             mean=[0.485, 0.456, 0.406],
                             std=[0.229, 0.224, 0.225],
                         ),
                         ToTensorV2(p=1.0),
-                ], bbox_params={'format': 'pascal_voc', 'label_fields': ['labels']})
+                ], bbox_params={'format': 'pascal_voc', 'label_fields': ['labels'], 'min_visibility': 0.3})
 
     return A.Compose([
                 A.Normalize(
@@ -37,7 +52,7 @@ def get_transformer(phase):
                     std=[0.229, 0.224, 0.225],
                 ),
                 ToTensorV2(p=1.0)
-    ], bbox_params={'format': 'pascal_voc', 'label_fields': ['labels']})
+    ], bbox_params={'format': 'pascal_voc', 'label_fields': ['labels'], 'min_visibility': 0.3})
 
 
 def get_writers(path, model_name, fold=None):
