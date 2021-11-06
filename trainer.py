@@ -183,7 +183,7 @@ def train_folds(model, x, y, path, config, scheduler=None):
 
         #   iterate folds
         for fold, (train_index, valid_index) in enumerate(kfold.split(x, y_labels), start=1): 
-            print('Fold {} of {}'.format(fold, config.n_folds))
+            print('\033[1m\033[4mFold {} of {}\033[0m'.format(fold, config.n_folds))
 
             #   get different training and validation writers for each fold
             writers = get_writers(path, config.model_name, fold)
