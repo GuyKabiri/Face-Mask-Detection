@@ -7,7 +7,8 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
-from sklearn.model_selection import train_test_split, KFold
+from sklearn.model_selection import train_test_split#, KFold
+from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
 from torch.utils.tensorboard import SummaryWriter
 
 from data_handler.FaceMaskDataset import FaceMaskDataset
@@ -174,12 +175,14 @@ def train_folds(model, x, y, path, config, scheduler=None):
         train_epochs(model, dataloaders, writers, optimizer, path, config, scheduler)
 
     else:
-        kfold = KFold(n_splits=config.n_folds, shuffle=True, random_state=config.seed)
+        kfold = MultilabelStratifiedKFold(n_splits=config.n_folds, shuffle=True, random_state=config.seed)
+
+        (y_annts, y_labels) = y
 
         prev_loss = float('inf')
 
         #   iterate folds
-        for fold, (train_index, valid_index) in enumerate(kfold.split(x, y), start=1): 
+        for fold, (train_index, valid_index) in enumerate(kfold.split(x, y_labels), start=1): 
             print('Fold {} of {}'.format(fold, config.n_folds))
 
             #   get different training and validation writers for each fold
@@ -187,7 +190,7 @@ def train_folds(model, x, y, path, config, scheduler=None):
 
             #   getting fold's data
             x_train, x_valid = x[train_index], x[valid_index]
-            y_train, y_valid = y[train_index], y[valid_index]
+            y_train, y_valid = y_annts[train_index], y_annts[valid_index]
             dataloaders = get_dataloaders(x_train, x_valid, y_train, y_valid, config)
 
             optimizer = get_optimizer(model, config)
