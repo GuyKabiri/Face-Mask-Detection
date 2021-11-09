@@ -25,19 +25,11 @@ def get_transformer(phase):
     if phase == 'train':
         return A.Compose([
                         A.OneOf([
-                            A.Flip(p=0.5),
-                            A.Rotate(p=0.5),
-                            A.RandomScale(p=0.5),
-                        ], p=0.5),
-                            A.OneOf([
-                            A.Affine(p=0.5),
-                            A.Perspective(p=0.5),
-                        ], p=0.5),
-                            A.OneOf([
-                            A.ChannelDropout(p=0.5),
+                            # A.ChannelDropout(p=0.5),
                             A.Emboss(p=0.5),
                             A.Sharpen(p=0.5),
                         ], p=0.5),
+                        A.Rotate(p=0.5, limit=[-35, 35]),
                         A.MotionBlur(p=0.3),
                         A.Normalize(
                             mean=[0.485, 0.456, 0.406],
