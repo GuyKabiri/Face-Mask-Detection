@@ -8,8 +8,13 @@ import torchvision.ops as ops
 '''
     apply Non-maximum Suppression by threshold for a single prediction (one image) and return the new predictions
 '''
-def get_pred_by_threshold(preds, threshold):
-    keep = ops.nms(preds['boxes'], preds['scores'], threshold)
+def get_pred_by_threshold(preds, nms_threshold, score_treshold=0):
+    keep = ops.nms(preds['boxes'], preds['scores'], nms_threshold)
+
+    keep_score = torch.where(preds['scores'] >= score_treshold)[0]
+
+    mask = torch.Tensor([ 1. if x in keep_score else 0. for x in keep ])
+    keep = torch.nonzero(mask).flatten()
     
     final_prediction = preds
     final_prediction['boxes'] = final_prediction['boxes'][keep]
@@ -22,10 +27,10 @@ def get_pred_by_threshold(preds, threshold):
 '''
     apply Non-maximum Suppression by threshold for batch (batch size can be equals to 1) and return new predictions
 '''
-def get_pred_by_threshold_batch(preds, threshold):
+def get_pred_by_threshold_batch(preds, nms_threshold, score_treshold=0):
     
     for i in range(len(preds)):
-        preds[i] = get_pred_by_threshold(preds[i], threshold)
+        preds[i] = get_pred_by_threshold(preds[i], nms_threshold, score_treshold)
         
     return preds
 
@@ -35,7 +40,7 @@ def get_pred_by_threshold_batch(preds, threshold):
     will the following columns for a single boundary box:
         image_id, real_class, pred_class, score, iou
 '''
-def get_iou_as_df(model, loader, nms_thresh):
+def get_iou_as_df(model, loader, nms_thresh, score_threshold=0):
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     model = model.to(device).eval()
     
@@ -46,7 +51,7 @@ def get_iou_as_df(model, loader, nms_thresh):
             img_batch  = list(img.to(device) for img in img_batch)
 
             output_batch = model(img_batch)
-            output_batch = get_pred_by_threshold_batch(output_batch, nms_thresh) # remove duplicated boxes
+            output_batch = get_pred_by_threshold_batch(output_batch, nms_thresh, score_threshold) # remove duplicated boxes
             
             output_batch_cpu = [{k: v.cpu().detach() for k, v in t.items()} for t in output_batch]
 
@@ -90,9 +95,9 @@ def calc_precision_recall(df, iou_thresh, path, eps=1e-6):
     df['recall'] = 0.
 
     #   evaluate TP/FP of each boundary box by specific IOU threshhold
-    df['TPorFP'] = np.where((df['real_class'] == df['pred_class']) & (df['iou'] >= iou_thresh), True, False)
+    df['TP/FP'] = np.where((df['real_class'] == df['pred_class']) & (df['iou'] >= iou_thresh), 'TP', 'FP')
 
-    total_tp_cls = { c: len(df[(df['real_class']==c) & (df['TPorFP'])]) for c in df['real_class'].unique() }    #   calculate the total TP for each class
+    total_tp_cls = { c: len(df[(df['real_class']==c) & (df['TP/FP'] == 'TP')]) for c in df['real_class'].unique() }    #   calculate the total TP for each class
     count_cls_tp = { c: 0 for c in df['real_class'].unique() }          #   TP counter for each class as iterating over the data
     count_cls_instance = { c: 0 for c in df['real_class'].unique() }    #   instances counter for each class
 
@@ -100,7 +105,7 @@ def calc_precision_recall(df, iou_thresh, path, eps=1e-6):
     for index, row in df.iterrows():
         row_class = row['real_class']       #   get the real class each boundary box referring to
         count_cls_instance[row_class] += 1  #   count instances of each class
-        if row['TPorFP']:
+        if row['TP/FP'] == 'TP':
             count_cls_tp[row_class] += 1    #   count TP of each class
         
         #   calculate precision and recall for each boundary box
@@ -109,7 +114,6 @@ def calc_precision_recall(df, iou_thresh, path, eps=1e-6):
 
     df.to_csv('{}/AP@{:.3}.csv'.format(path, iou_thresh), index=False)
     return df
-
 
 def calc_mAP_from_auc_dict(auc_dict):
     iou_total = dict()
