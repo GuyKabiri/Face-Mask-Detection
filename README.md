@@ -11,7 +11,7 @@ It uses Kaggle's Face Mask Detection [dataset](https://www.kaggle.com/andrewmvd/
    * [Classes Distribution](#classes-distribution)
    * [Classes Combinations Distribution](#classes-combinations-distribution)
    * [Number of Faces per Image](#number-of-faces-per-image)
- * [Spliting the Data](#spliting-the-data)
+ * [Spliting the Data](#splitting-the-data)
  * [Data Samples](#data-samples)
    * [Real Data Samples](#real-data-samples)
    * [Augmentation Samples](#augmentation-samples)
@@ -169,19 +169,6 @@ df.head()
 
 
 <div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -325,19 +312,6 @@ plt.show()
 
 
 <div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -369,7 +343,7 @@ plt.show()
 
 
     
-![png](training_files/training_16_1.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/1.png)
     
 
 
@@ -419,7 +393,7 @@ plt.show()
 
 
     
-![png](training_files/training_18_0.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/2.png)
     
 
 
@@ -481,7 +455,7 @@ for idx, label in enumerate(list(face_dist_df.faces)):
 
 
     
-![png](training_files/training_22_0.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/3.png)
     
 
 
@@ -577,19 +551,6 @@ for c in ax.containers:
 
 
 <div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -697,7 +658,7 @@ for c in ax.containers:
 
 
     
-![png](training_files/training_26_2.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/4.png)
     
 
 
@@ -780,61 +741,19 @@ if DEBUG == False:
 
 
     
-![png](training_files/training_31_0.png)
-    
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/5.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/6.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/7.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/8.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/9.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/10.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/11.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/12.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/13.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/14.png)
 
 
 
-    
-![png](training_files/training_31_1.png)
-    
-
-
-
-    
-![png](training_files/training_31_2.png)
-    
-
-
-
-    
-![png](training_files/training_31_3.png)
-    
-
-
-
-    
-![png](training_files/training_31_4.png)
-    
-
-
-
-    
-![png](training_files/training_31_5.png)
-    
-
-
-
-    
-![png](training_files/training_31_6.png)
-    
-
-
-
-    
-![png](training_files/training_31_7.png)
-    
-
-
-
-    
-![png](training_files/training_31_8.png)
-    
-
-
-
-    
-![png](training_files/training_31_9.png)
     
 
 
@@ -851,61 +770,16 @@ if DEBUG == False:
 
 
     
-![png](training_files/training_33_0.png)
-    
-
-
-
-    
-![png](training_files/training_33_1.png)
-    
-
-
-
-    
-![png](training_files/training_33_2.png)
-    
-
-
-
-    
-![png](training_files/training_33_3.png)
-    
-
-
-
-    
-![png](training_files/training_33_4.png)
-    
-
-
-
-    
-![png](training_files/training_33_5.png)
-    
-
-
-
-    
-![png](training_files/training_33_6.png)
-    
-
-
-
-    
-![png](training_files/training_33_7.png)
-    
-
-
-
-    
-![png](training_files/training_33_8.png)
-    
-
-
-
-    
-![png](training_files/training_33_9.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/15.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/16.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/17.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/18.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/19.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/20.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/21.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/22.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/23.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/24.png)
     
 
 
@@ -2305,43 +2179,43 @@ It's best to look at Tensorboard, but for a quick glance, here are a few example
 #### Graphs per Fold
 
 ##### Average Loss
-![](/home/linuxgpu/anaconda3/envs/lab1/Face-Mask-Detection/graphs/folds/average_loss.png)
+![](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/graphs/folds/average_loss.png)
 
 ##### Box Regression Loss
-![](/home/linuxgpu/anaconda3/envs/lab1/Face-Mask-Detection/graphs/folds/loss_box_reg.png)
+![](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/graphs/folds/loss_box_reg.png)
 
 ##### Classifier Loss
-![](/home/linuxgpu/anaconda3/envs/lab1/Face-Mask-Detection/graphs/folds/loss_classifier.png)
+![](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/graphs/folds/loss_classifier.png)
 
 ##### Objectness Loss
-![](/home/linuxgpu/anaconda3/envs/lab1/Face-Mask-Detection/graphs/folds/loss_objectness.png)
+![](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/graphs/folds/loss_objectness.png)
 
 ##### RPN Box Regression Loss
-![](/home/linuxgpu/anaconda3/envs/lab1/Face-Mask-Detection/graphs/folds/loss_rpn_box_reg.png)
+![](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/graphs/folds/loss_rpn_box_reg.png)
 
 ##### Learning Rate
-![](/home/linuxgpu/anaconda3/envs/lab1/Face-Mask-Detection/graphs/folds/lr_epoch.png)
+![](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/graphs/folds/lr_epoch.png)
 
 #### Entire Model
 To better understand the learning progress of the model over time, it would be useful to analyze the graph of the folds as a series.
 
 ##### Average Loss
-![](/home/linuxgpu/anaconda3/envs/lab1/Face-Mask-Detection/graphs/model/average_loss.png)
+![](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/graphs/model/average_loss.png)
 
 ##### Box Regression Loss
-![](/home/linuxgpu/anaconda3/envs/lab1/Face-Mask-Detection/graphs/model/loss_box_reg.png)
+![](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/graphs/model/loss_box_reg.png)
 
 ##### Classifier Loss
-![](/home/linuxgpu/anaconda3/envs/lab1/Face-Mask-Detection/graphs/model/loss_classifier.png)
+![](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/graphs/model/loss_classifier.png)
 
 ##### Objectness Loss
-![](/home/linuxgpu/anaconda3/envs/lab1/Face-Mask-Detection/graphs/model/loss_objectness.png)
+![](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/graphs/model/loss_objectness.png)
 
 ##### RPN Box Regression Loss
-![](/home/linuxgpu/anaconda3/envs/lab1/Face-Mask-Detection/graphs/model/loss_rpn_box_reg.png)
+![](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/graphs/model/loss_rpn_box_reg.png)
 
 ##### Learning Rate
-![](/home/linuxgpu/anaconda3/envs/lab1/Face-Mask-Detection/graphs/model/lr_epoch.png)
+![](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/graphs/model/lr_epoch.png)
 
 
 ```python
@@ -2418,63 +2292,17 @@ plot_test_examples(model, test_loader, nms_threshold=CFG.nms_thresh, score_thres
 ```
 
 
-    
-![png](training_files/training_58_0.png)
-    
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/30.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/31.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/32.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/33.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/34.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/35.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/36.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/37.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/38.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/39.png)
 
-
-
-    
-![png](training_files/training_58_1.png)
-    
-
-
-
-    
-![png](training_files/training_58_2.png)
-    
-
-
-
-    
-![png](training_files/training_58_3.png)
-    
-
-
-
-    
-![png](training_files/training_58_4.png)
-    
-
-
-
-    
-![png](training_files/training_58_5.png)
-    
-
-
-
-    
-![png](training_files/training_58_6.png)
-    
-
-
-
-    
-![png](training_files/training_58_7.png)
-    
-
-
-
-    
-![png](training_files/training_58_8.png)
-    
-
-
-
-    
-![png](training_files/training_58_9.png)
-    
 
 
 ### Mean Average Precision
@@ -2573,67 +2401,18 @@ evaluate(model, test_loader, CFG.nms_thresh, CFG.score_threshold)
 
 
     
-![png](training_files/training_62_1.png)
-    
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/40.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/41.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/42.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/43.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/44.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/45.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/46.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/47.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/48.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/49.png)
+![png](https://github.com/GuyKabiri/Face-Mask-Detection/blob/main/notebook_images/50.png)
 
-
-
-    
-![png](training_files/training_62_2.png)
-    
-
-
-
-    
-![png](training_files/training_62_3.png)
-    
-
-
-
-    
-![png](training_files/training_62_4.png)
-    
-
-
-
-    
-![png](training_files/training_62_5.png)
-    
-
-
-
-    
-![png](training_files/training_62_6.png)
-    
-
-
-
-    
-![png](training_files/training_62_7.png)
-    
-
-
-
-    
-![png](training_files/training_62_8.png)
-    
-
-
-
-    
-![png](training_files/training_62_9.png)
-    
-
-
-
-    
-![png](training_files/training_62_10.png)
-    
-
-
-
-    
-![png](training_files/training_62_11.png)
     
 
 
